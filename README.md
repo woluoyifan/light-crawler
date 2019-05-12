@@ -1,35 +1,35 @@
-# ³¬ÇáÁ¿¼¶javaÅÀ³æ½ÅÊÖ¼Ü<br><br>
+# è¶…è½»é‡çº§javaçˆ¬è™«è„šæ‰‹æž¶<br><br>
 
-## Ò».Ç°ÑÔ<br>
-±¾ÏîÄ¿ÊÇÊÜwebcollectorµÄÆô·¢,Í¨¹ý×î¼òµ¥µÄ·½Ê½Ìá¹©ÁËÒ»¸ö³¬ÇáÁ¿¼¶µÄjavaÅÀ³æ¿ª·¢½ÅÊÖ¼Ü<br><br>
+## ä¸€.å‰è¨€<br>
+æœ¬é¡¹ç›®æ˜¯å—webcollectorçš„å¯å‘,é€šè¿‡æœ€ç®€å•çš„æ–¹å¼æä¾›äº†ä¸€ä¸ªè¶…è½»é‡çº§çš„javaçˆ¬è™«å¼€å‘è„šæ‰‹æž¶<br><br>
 
-## ¶þ.ÏîÄ¿ÒÀÀµ<br>
+## äºŒ.é¡¹ç›®ä¾èµ–<br>
 <ul>
     <li>lombok</li>
     <li>slf4j-api</li>
     <li>log4j2</li>
-    <li>okhttp(¿ÉÑ¡)</li>
+    <li>okhttp(å¯é€‰)</li>
 </ul>
 
-## Èý.Ê¹ÓÃ<br>
-×Ô¶¨Òå````Requester````ºÍ````Visitor````µÄ½Ó¿ÚÊµÏÖÀà<br><br>
-Ò»¸ö¿ìËÙ¿ªÊ¼µÄÀý×Ó:<br>
+## ä¸‰.ä½¿ç”¨<br>
+è‡ªå®šä¹‰````Requester````å’Œ````Visitor````çš„æŽ¥å£å®žçŽ°ç±»<br><br>
+ä¸€ä¸ªå¿«é€Ÿå¼€å§‹çš„ä¾‹å­:<br>
 ````
     new Crawler()
-        //Ö´ÐÐÇëÇóÊµÏÖ
+        //æ‰§è¡Œè¯·æ±‚å®žçŽ°
         .requester(requester)
-        //½á¹û½âÎöÊµÏÖ
+        //ç»“æžœè§£æžå®žçŽ°
         .visitor(visitor)
-        //Ö´ÐÐÏß³ÌÊý
+        //æ‰§è¡Œçº¿ç¨‹æ•°
         .thread(3)
-        //ÇëÇó¼ä¸ô,ºÁÃë
+        //è¯·æ±‚é—´éš”,æ¯«ç§’
         .requestInterval(200L)
-        //Ìí¼ÓÇëÇóÖÖ×Ó
+        //æ·»åŠ è¯·æ±‚ç§å­
         .add(new Seed("http://www.luoyifan.com"))
-        //Æô¶¯
+        //å¯åŠ¨
         .start();
 ````
-×÷Îª¿ìËÙ¿ªÊ¼µÄÀý×ÓµÄÒ»²¿·Ö,Ä¿Ç°ÔÚ````extend````Ä£¿éÖÐÌá¹©ÁË2¸ö»ù´¡µÄÊµÏÖÀà<br>
-````OkHttpRequester````ºÍ````ConsoleVisitor````<br>
-ËüÃÇ·Ö±ðÊµÏÖÁË````Requester````½Ó¿ÚºÍ````Visitor````½Ó¿Ú<br>
-½«Ê¹ÓÃOkHttpÖ±½Ó½øÐÐÇëÇó²¢½«·µ»Ø½á¹û´òÓ¡ÔÚ¿ØÖÆÌ¨ÖÐ
+ä½œä¸ºå¿«é€Ÿå¼€å§‹çš„ä¾‹å­çš„ä¸€éƒ¨åˆ†,ç›®å‰åœ¨````extend````æ¨¡å—ä¸­æä¾›äº†2ä¸ªåŸºç¡€çš„å®žçŽ°ç±»<br>
+````OkHttpRequester````å’Œ````ConsoleVisitor````<br>
+å®ƒä»¬åˆ†åˆ«å®žçŽ°äº†````Requester````æŽ¥å£å’Œ````Visitor````æŽ¥å£<br>
+å°†ä½¿ç”¨OkHttpç›´æŽ¥è¿›è¡Œè¯·æ±‚å¹¶å°†è¿”å›žç»“æžœæ‰“å°åœ¨æŽ§åˆ¶å°ä¸­
