@@ -29,7 +29,6 @@
         //启动
         .start();
 ````
-作为快速开始的例子的一部分,目前在````extend````模块中提供了2个基础的实现类<br>
-````OkHttpRequester````和````ConsoleVisitor````<br>
-它们分别实现了````Requester````接口和````Visitor````接口<br>
-将使用OkHttp直接进行请求并将返回结果打印在控制台中
+作为快速开始的例子的一部分,目前提供了2个基础的实现类<br>
+位于````core````模块的````OkHttpRequester````,实现了````Requester````接口<br>
+位于````extend````模块的````ConsoleVisitor````,实现了````Visitor````接口<br>
