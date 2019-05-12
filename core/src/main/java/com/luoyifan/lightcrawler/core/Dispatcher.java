@@ -3,6 +3,7 @@ package com.luoyifan.lightcrawler.core;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -111,6 +112,8 @@ public class Dispatcher {
                         sleep(requestInterval);
                     }
                 }
+                seed.increaseExecuteCount();
+                seed.setExecuteTime(LocalDateTime.now());
                 String url = seed.getUrl();
                 try {
                     Page page = requester.request(seed);
@@ -121,9 +124,8 @@ public class Dispatcher {
                     pageRepository.add(page);
                     log.info("request success,url:{}", url);
                 } catch (IOException e) {
-                    log.error("request fail,url:{}", seed.getUrl());
-                    seed.setRetry(seed.getRetry() + 1);
-                    seedRepository.add(seed);
+                    log.error("request fail,url:{}", url, e);
+                    pushBack(seed);
                 }
             });
 
@@ -141,15 +143,14 @@ public class Dispatcher {
             }
             Page page = pageRepository.remove(0);
             dispatchThreadPool.execute(() -> {
+                Seed seed = page.getSeed();
                 try {
                     visitor.visit(page);
                     counter.addAndGet(-1);
-                    log.info("visitor success,url:{}", page.getSeed().getUrl());
+                    log.info("visitor success,url:{}", seed.getUrl());
                 } catch (Exception e) {
-                    Seed seed = page.getSeed();
-                    log.error("visit fail,url:{}", seed.getUrl());
-                    seed.setRetry(seed.getRetry() + 1);
-                    seedRepository.add(seed);
+                    log.error("visit fail,url:{}", seed.getUrl(), e);
+                    pushBack(seed);
                 }
             });
         }
@@ -171,6 +172,7 @@ public class Dispatcher {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
+            log.error("sleep error",e);
         }
     }
 
@@ -182,4 +184,9 @@ public class Dispatcher {
         return Executors.newCachedThreadPool();
     }
 
+    protected void pushBack(Seed seed) {
+        if (config.isRetry() && config.getMaxExecuteCount() > seed.getExecuteCount()) {
+            this.seedRepository.add(seed);
+        }
+    }
 }

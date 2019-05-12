@@ -2,6 +2,7 @@ package com.luoyifan.lightcrawler.core;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,19 +13,22 @@ import java.util.Map;
 @Data
 public class Seed {
     private String url;
-    private int retry;
+    private LocalDateTime createTime = LocalDateTime.now();
+    private int executeCount = 0;
+    private LocalDateTime executeTime;
     private Map<String, String> extraMap;
 
-    public Seed(){}
+    public Seed() {
+    }
 
-    public Seed(String url){
+    public Seed(String url) {
         this.url = url;
     }
 
     public void extra(String key, String value) {
-        if (this.extraMap == null) {
-            synchronized (this) {
-                if (this.extraMap == null) {
+        if(this.extraMap == null){
+            synchronized (this){
+                if(this.extraMap == null){
                     this.extraMap = new HashMap<>();
                 }
             }
@@ -34,5 +38,10 @@ public class Seed {
 
     public String extra(String key) {
         return this.extraMap == null ? null : this.extraMap.get(key);
+    }
+
+    public int increaseExecuteCount() {
+        this.executeCount++;
+        return this.executeCount;
     }
 }
