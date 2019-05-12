@@ -1,4 +1,4 @@
-package com.luoyifan.lightcrawler.core;
+package com.luoyifan.lightcrawler.core.model;
 
 import lombok.Data;
 

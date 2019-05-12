@@ -1,7 +1,6 @@
-package com.luoyifan.lightcrawler.extend;
+package com.luoyifan.lightcrawler.core.processor;
 
-import com.luoyifan.lightcrawler.core.Page;
-import com.luoyifan.lightcrawler.core.Visitor;
+import com.luoyifan.lightcrawler.core.model.Page;
 
 /**
  * @author EvanLuo

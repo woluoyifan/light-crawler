@@ -1,4 +1,7 @@
-package com.luoyifan.lightcrawler.core;
+package com.luoyifan.lightcrawler.core.processor;
+
+import com.luoyifan.lightcrawler.core.model.Page;
+import com.luoyifan.lightcrawler.core.model.Seed;
 
 import java.io.IOException;
 

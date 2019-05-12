@@ -1,5 +1,10 @@
 package com.luoyifan.lightcrawler.core;
 
+import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
+import com.luoyifan.lightcrawler.core.model.Seed;
+import com.luoyifan.lightcrawler.core.processor.Dispatcher;
+import com.luoyifan.lightcrawler.core.processor.Requester;
+import com.luoyifan.lightcrawler.core.processor.Visitor;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -35,6 +40,27 @@ public class Crawler {
         Dispatcher dispatcher = new Dispatcher(this.requester, this.visitor);
         dispatcher.init(seedList, config);
         dispatcher.dispatch();
+    }
+
+    public Crawler add(String url){
+        if(url == null){
+            throw new IllegalArgumentException("url can not be null");
+        }
+        if(url.isEmpty()){
+            throw new IllegalArgumentException("url can not be empty");
+        }
+        seedList.add(new Seed(url));
+        return this;
+    }
+
+    public Crawler add(String...urls){
+        if(urls == null){
+            throw new IllegalArgumentException("urls can not be null");
+        }
+        for(String url:urls){
+            this.add(url);
+        }
+        return this;
     }
 
     public Crawler add(Seed seed) {

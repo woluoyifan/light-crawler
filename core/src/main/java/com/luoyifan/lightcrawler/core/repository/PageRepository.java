@@ -1,4 +1,6 @@
-package com.luoyifan.lightcrawler.core;
+package com.luoyifan.lightcrawler.core.repository;
+
+import com.luoyifan.lightcrawler.core.model.Page;
 
 import java.util.Collections;
 import java.util.LinkedList;

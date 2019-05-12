@@ -1,4 +1,4 @@
-package com.luoyifan.lightcrawler.core;
+package com.luoyifan.lightcrawler.core.repository;
 
 import java.util.List;
 

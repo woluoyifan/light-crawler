@@ -1,5 +1,11 @@
-package com.luoyifan.lightcrawler.core;
+package com.luoyifan.lightcrawler.core.processor;
 
+import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
+import com.luoyifan.lightcrawler.core.model.Page;
+import com.luoyifan.lightcrawler.core.model.Seed;
+import com.luoyifan.lightcrawler.core.repository.PageRepository;
+import com.luoyifan.lightcrawler.core.repository.ResourceRepository;
+import com.luoyifan.lightcrawler.core.repository.SeedRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -49,8 +55,8 @@ public class Dispatcher {
      */
     private CrawlerConfig config;
 
-    private SeedRepository seedRepository;
-    private PageRepository pageRepository;
+    private ResourceRepository<Seed> seedRepository;
+    private ResourceRepository<Page> pageRepository;
     /**
      * 种子源
      */
