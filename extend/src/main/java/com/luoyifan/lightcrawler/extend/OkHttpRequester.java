@@ -1,8 +1,8 @@
 package com.luoyifan.lightcrawler.extend;
 
-import com.luoyifan.lightcrawler.core.Page;
-import com.luoyifan.lightcrawler.core.Requester;
-import com.luoyifan.lightcrawler.core.Seed;
+import com.luoyifan.lightcrawler.core.model.Page;
+import com.luoyifan.lightcrawler.core.model.Seed;
+import com.luoyifan.lightcrawler.core.processor.Requester;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
