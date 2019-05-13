@@ -198,6 +198,7 @@ public class Dispatcher {
     protected void pushBack(Seed seed) {
         if (config.isRetry() && config.getMaxExecuteCount() > seed.getExecuteCount()) {
             this.seedRepository.add(seed);
+            return;
         }
         this.counter.addAndGet(-1);
     }
