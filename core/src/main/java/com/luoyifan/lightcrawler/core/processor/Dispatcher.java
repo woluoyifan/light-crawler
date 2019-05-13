@@ -128,6 +128,11 @@ public class Dispatcher {
                     }
                     page.setSeed(seed);
                     pageRepository.add(page);
+                    List<Seed> nextList = page.getNextList();
+                    if (nextList != null) {
+                        seedList.addAll(nextList);
+                        seedRepository.addAll(seedList);
+                    }
                     log.info("request success,url:{}", url);
                 } catch (IOException e) {
                     log.error("request fail,url:{}", url, e);
@@ -178,7 +183,7 @@ public class Dispatcher {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
-            log.error("sleep error",e);
+            log.error("sleep error", e);
         }
     }
 
