@@ -199,5 +199,6 @@ public class Dispatcher {
         if (config.isRetry() && config.getMaxExecuteCount() > seed.getExecuteCount()) {
             this.seedRepository.add(seed);
         }
+        this.counter.addAndGet(-1);
     }
 }
