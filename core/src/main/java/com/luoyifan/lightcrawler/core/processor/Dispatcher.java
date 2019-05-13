@@ -99,6 +99,7 @@ public class Dispatcher {
         watch();
         requestThreadPool.shutdown();
         dispatchThreadPool.shutdown();
+        log.info("finish");
     }
 
     protected void handleSeed() {
@@ -129,9 +130,9 @@ public class Dispatcher {
                     page.setSeed(seed);
                     pageRepository.add(page);
                     List<Seed> nextList = page.getNextList();
-                    if (nextList != null) {
+                    if (nextList != null && nextList.size() > 0) {
                         seedList.addAll(nextList);
-                        seedRepository.addAll(seedList);
+                        seedRepository.addAll(nextList);
                     }
                     log.info("request success,url:{}", url);
                 } catch (IOException e) {
