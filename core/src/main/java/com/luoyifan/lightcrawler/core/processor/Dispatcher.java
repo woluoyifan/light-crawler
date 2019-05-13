@@ -131,8 +131,9 @@ public class Dispatcher {
                     pageRepository.add(page);
                     List<Seed> nextList = page.getNextList();
                     if (nextList != null && nextList.size() > 0) {
-                        seedList.addAll(nextList);
-                        seedRepository.addAll(nextList);
+                        this.counter.addAndGet(nextList.size());
+                        this.seedList.addAll(nextList);
+                        this.seedRepository.addAll(nextList);
                     }
                     log.info("request success,url:{}", url);
                 } catch (IOException e) {
