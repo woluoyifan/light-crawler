@@ -3,9 +3,9 @@ package com.luoyifan.lightcrawler.core.processor;
 import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
 import com.luoyifan.lightcrawler.core.model.Page;
 import com.luoyifan.lightcrawler.core.model.Seed;
-import com.luoyifan.lightcrawler.core.repository.PageRepository;
+import com.luoyifan.lightcrawler.core.repository.MemoryPageRepository;
 import com.luoyifan.lightcrawler.core.repository.ResourceRepository;
-import com.luoyifan.lightcrawler.core.repository.SeedRepository;
+import com.luoyifan.lightcrawler.core.repository.MemorySeedRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -78,9 +78,9 @@ public class Dispatcher {
             throw new RuntimeException("requester not set");
         }
         this.seedList = new ArrayList<>(seedList);
-        this.seedRepository = new SeedRepository();
+        this.seedRepository = new MemorySeedRepository();
         this.seedRepository.addAll(seedList);
-        this.pageRepository = new PageRepository();
+        this.pageRepository = new MemoryPageRepository();
         if (this.requestThreadPool == null) {
             this.requestThreadPool = initRequestThreadPool(config.getThread());
         }

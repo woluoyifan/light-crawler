@@ -10,7 +10,7 @@ import java.util.List;
  * @author EvanLuo
  * @date 2019/5/11 23:20
  */
-public class PageRepository implements ResourceRepository<Page> {
+public class MemoryPageRepository implements ResourceRepository<Page> {
 
     private List<Page> pageList = Collections.synchronizedList(new LinkedList<>());
 

@@ -10,7 +10,7 @@ import java.util.List;
  * @author EvanLuo
  * @date 2019/5/11 23:17
  */
-public class SeedRepository implements ResourceRepository<Seed> {
+public class MemorySeedRepository implements ResourceRepository<Seed> {
 
     private List<Seed> seedList = Collections.synchronizedList(new LinkedList<>());
 
