@@ -15,7 +15,7 @@ public class Seed {
     private Long createTime = System.currentTimeMillis();
     private int executeCount = 0;
     private Long executeTime;
-    private Map<String, String> extraMap;
+    private Map<String, String> extraMap = new HashMap<>();
 
     public Seed() {
     }
@@ -24,21 +24,58 @@ public class Seed {
         this.url = url;
     }
 
-    public void extra(String key, String value) {
-        if(this.extraMap == null){
-            synchronized (this){
-                if(this.extraMap == null){
-                    this.extraMap = new HashMap<>();
-                }
-            }
+    /**
+     * url
+     * @return this
+     */
+    public Seed url(String url){
+        this.url = url;
+        return this;
+    }
+
+    /**
+     * extra data
+     * @param extraMap data
+     * @param replace if<code>true</code>,then the internal <code>extraMap</code> will be replaced,or append
+     * @return this
+     */
+    public Seed extra(Map<String,String> extraMap,boolean replace){
+        if(replace){
+            this.extraMap = extraMap;
+        }else{
+            this.extraMap.putAll(extraMap);
         }
+        return this;
+    }
+
+    /**
+     * extra data
+     * {@link HashMap}
+     *
+     * @param key key
+     * @param value value
+     * @return this
+     */
+    public Seed extra(String key, String value) {
         this.extraMap.put(key, value);
+        return this;
     }
 
+    /**
+     * extra data
+     * {@link HashMap}
+     *
+     * @param key key
+     * @return value
+     */
     public String extra(String key) {
-        return this.extraMap == null ? null : this.extraMap.get(key);
+        return this.extraMap.get(key);
     }
 
+    /**
+     * increase internal executeCount
+     * @return executeCount
+     */
     public int increaseExecuteCount() {
         this.executeCount++;
         return this.executeCount;
