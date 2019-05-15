@@ -2,7 +2,6 @@ package com.luoyifan.lightcrawler.core.model;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,9 +12,9 @@ import java.util.Map;
 @Data
 public class Seed {
     private String url;
-    private LocalDateTime createTime = LocalDateTime.now();
+    private Long createTime = System.currentTimeMillis();
     private int executeCount = 0;
-    private LocalDateTime executeTime;
+    private Long executeTime;
     private Map<String, String> extraMap;
 
     public Seed() {

@@ -9,7 +9,6 @@ import com.luoyifan.lightcrawler.core.repository.SeedRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -120,7 +119,7 @@ public class Dispatcher {
                     }
                 }
                 seed.increaseExecuteCount();
-                seed.setExecuteTime(LocalDateTime.now());
+                seed.setExecuteTime(System.currentTimeMillis());
                 String url = seed.getUrl();
                 try {
                     Page page = requester.request(seed);
