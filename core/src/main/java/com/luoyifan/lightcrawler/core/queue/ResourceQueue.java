@@ -1,4 +1,4 @@
-package com.luoyifan.lightcrawler.core.repository;
+package com.luoyifan.lightcrawler.core.queue;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import java.util.List;
  * @author EvanLuo
  * @date 2019/5/11 23:17
  */
-public interface ResourceRepository<T> {
+public interface ResourceQueue<T> {
     List<T> getAll();
 
     void add(T obj);

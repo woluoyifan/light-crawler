@@ -3,13 +3,12 @@ package com.luoyifan.lightcrawler.core.processor;
 import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
 import com.luoyifan.lightcrawler.core.model.Page;
 import com.luoyifan.lightcrawler.core.model.Seed;
-import com.luoyifan.lightcrawler.core.repository.MemoryPageRepository;
-import com.luoyifan.lightcrawler.core.repository.ResourceRepository;
-import com.luoyifan.lightcrawler.core.repository.MemorySeedRepository;
+import com.luoyifan.lightcrawler.core.queue.MemoryPageQueue;
+import com.luoyifan.lightcrawler.core.queue.MemorySeedQueue;
+import com.luoyifan.lightcrawler.core.queue.ResourceQueue;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,12 +53,8 @@ public class Dispatcher {
      */
     private CrawlerConfig config;
 
-    private ResourceRepository<Seed> seedRepository;
-    private ResourceRepository<Page> pageRepository;
-    /**
-     * 种子源
-     */
-    private List<Seed> seedList;
+    private ResourceQueue<Seed> seedQueue;
+    private ResourceQueue<Page> pageQueue;
 
     public Dispatcher(Requester requester, Visitor visitor) {
         this.requester = requester;
@@ -77,28 +72,35 @@ public class Dispatcher {
         if (this.requester == null) {
             throw new RuntimeException("requester not set");
         }
-        this.seedList = new ArrayList<>(seedList);
-        this.seedRepository = new MemorySeedRepository();
-        this.seedRepository.addAll(seedList);
-        this.pageRepository = new MemoryPageRepository();
+        this.seedQueue = new MemorySeedQueue();
+        this.seedQueue.addAll(seedList);
+        this.pageQueue = new MemoryPageQueue();
         if (this.requestThreadPool == null) {
             this.requestThreadPool = initRequestThreadPool(config.getThread());
         }
         this.dispatchThreadPool = initDispatchThreadPool();
-        this.counter = new AtomicInteger(seedRepository.size());
+        this.counter = new AtomicInteger(seedQueue.size());
     }
 
     public void dispatch() {
         log.info("start...");
-        if (seedList == null || seedList.isEmpty()) {
+        if (this.seedQueue.isEmpty()) {
+            log.info("you should add at least one seed/url");
+            log.info("stop");
             return;
         }
+        log.info("init size: {}", this.seedQueue.size());
+        log.info("start seed processor");
         dispatchThreadPool.execute(this::handleSeed);
+        log.info("start page processor");
         dispatchThreadPool.execute(this::handlePage);
+        log.info("start watch dog");
         watch();
+        log.info("try to shutdown request thread pool");
         requestThreadPool.shutdown();
+        log.info("try to shutdown dispatch thread pool");
         dispatchThreadPool.shutdown();
-        log.info("finish");
+        log.info("stop");
     }
 
     protected void handleSeed() {
@@ -106,11 +108,11 @@ public class Dispatcher {
             if (counter.get() == 0) {
                 return;
             }
-            if (seedRepository.isEmpty()) {
+            if (seedQueue.isEmpty()) {
                 sleep(spinInterval);
                 continue;
             }
-            Seed seed = seedRepository.remove(0);
+            Seed seed = seedQueue.remove(0);
             requestThreadPool.execute(() -> {
                 long requestInterval = config.getRequestInterval();
                 if (requestInterval > 0) {
@@ -127,12 +129,11 @@ public class Dispatcher {
                         return;
                     }
                     page.setSeed(seed);
-                    pageRepository.add(page);
+                    pageQueue.add(page);
                     List<Seed> nextList = page.getNextList();
                     if (nextList != null && nextList.size() > 0) {
                         this.counter.addAndGet(nextList.size());
-                        this.seedList.addAll(nextList);
-                        this.seedRepository.addAll(nextList);
+                        this.seedQueue.addAll(nextList);
                     }
                     log.info("request success,url:{}", url);
                 } catch (IOException e) {
@@ -149,11 +150,11 @@ public class Dispatcher {
             if (counter.get() == 0) {
                 return;
             }
-            if (pageRepository.isEmpty()) {
+            if (pageQueue.isEmpty()) {
                 sleep(spinInterval);
                 continue;
             }
-            Page page = pageRepository.remove(0);
+            Page page = pageQueue.remove(0);
             dispatchThreadPool.execute(() -> {
                 Seed seed = page.getSeed();
                 try {
@@ -171,8 +172,7 @@ public class Dispatcher {
     protected void watch() {
         while (true) {
             int count = counter.get();
-            int total = seedList.size();
-            log.info("{}/{}", total - count, total);
+            log.info("size: {}", count);
             if (count == 0) {
                 return;
             }
@@ -198,7 +198,7 @@ public class Dispatcher {
 
     protected void pushBack(Seed seed) {
         if (config.isRetry() && config.getMaxExecuteCount() > seed.getExecuteCount()) {
-            this.seedRepository.add(seed);
+            this.seedQueue.add(seed);
             return;
         }
         this.counter.addAndGet(-1);

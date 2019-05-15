@@ -1,4 +1,4 @@
-package com.luoyifan.lightcrawler.core.repository;
+package com.luoyifan.lightcrawler.core.queue;
 
 import com.luoyifan.lightcrawler.core.model.Page;
 
@@ -10,7 +10,7 @@ import java.util.List;
  * @author EvanLuo
  * @date 2019/5/11 23:20
  */
-public class MemoryPageRepository implements ResourceRepository<Page> {
+public class MemoryPageQueue implements ResourceQueue<Page> {
 
     private List<Page> pageList = Collections.synchronizedList(new LinkedList<>());
 

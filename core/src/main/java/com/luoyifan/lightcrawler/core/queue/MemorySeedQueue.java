@@ -1,4 +1,4 @@
-package com.luoyifan.lightcrawler.core.repository;
+package com.luoyifan.lightcrawler.core.queue;
 
 import com.luoyifan.lightcrawler.core.model.Seed;
 
@@ -10,7 +10,7 @@ import java.util.List;
  * @author EvanLuo
  * @date 2019/5/11 23:17
  */
-public class MemorySeedRepository implements ResourceRepository<Seed> {
+public class MemorySeedQueue implements ResourceQueue<Seed> {
 
     private List<Seed> seedList = Collections.synchronizedList(new LinkedList<>());
 
