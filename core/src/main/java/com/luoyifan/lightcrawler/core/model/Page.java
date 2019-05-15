@@ -2,6 +2,7 @@ package com.luoyifan.lightcrawler.core.model;
 
 import lombok.Data;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,7 @@ import java.util.List;
 public class Page {
     private byte[] content;
     private int code;
+    private Charset charset;
     private Seed seed;
     private List<Seed> nextList = new ArrayList<>();
 
@@ -24,12 +26,54 @@ public class Page {
         this.content = content;
     }
 
-    public void next(Seed seed) {
-        nextList.add(seed);
+    /**
+     * response content
+     * @param content content
+     * @return
+     */
+    public Page content(byte[] content){
+        this.content = content;
+        return this;
     }
 
-    public void next(List<Seed> seedList) {
-        nextList.addAll(seedList);
+    /**
+     * response code
+     * @param code code
+     * @return
+     */
+    public Page code(int code){
+        this.code = code;
+        return this;
+    }
+
+    /**
+     * response charset
+     * @param charset response charset
+     * @return
+     */
+    public Page charset(Charset charset){
+        this.charset = charset;
+        return this;
+    }
+
+    /**
+     * append seed
+     * @param seed
+     * @return
+     */
+    public Page next(Seed seed) {
+        this.nextList.add(seed);
+        return this;
+    }
+
+    /**
+     * append seed
+     * @param seedList
+     * @return
+     */
+    public Page next(List<Seed> seedList) {
+        this.nextList.addAll(seedList);
+        return this;
     }
 
 }
