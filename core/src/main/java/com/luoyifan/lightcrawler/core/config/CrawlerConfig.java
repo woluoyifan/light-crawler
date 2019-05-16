@@ -1,5 +1,8 @@
 package com.luoyifan.lightcrawler.core.config;
 
+import com.luoyifan.lightcrawler.core.processor.ConsoleVisitor;
+import com.luoyifan.lightcrawler.core.processor.Requester;
+import com.luoyifan.lightcrawler.core.processor.Visitor;
 import lombok.Data;
 
 /**
@@ -9,13 +12,29 @@ import lombok.Data;
 @Data
 public class CrawlerConfig {
     /**
+     * 请求器
+     */
+    private Requester requester;
+
+    /**
+     * 解析器
+     */
+    private Visitor visitor = new ConsoleVisitor();
+
+    /**
      * 执行线程数
      */
     private int thread = 1;
+
     /**
      * 请求间隔
      */
     private long requestInterval = 200L;
+
+    /**
+     * 监听状态报送间隔
+     */
+    private long watchInterval = 1000L;
 
     /**
      * 允许重试
@@ -25,12 +44,17 @@ public class CrawlerConfig {
     /**
      * 最大执行次数
      */
-    private long maxExecuteCount = 3;
+    private int maxExecuteCount = 3;
+
+    /**
+     * url可重复
+     */
+    private boolean duplicate = true;
 
     /**
      * 使用布隆过滤器的最小种子数
      */
-    private long useBloomFilterSeedCount = 1000000;
+    private int minimumNumOfSeedsUsingBloomFilter = 1000000;
 
     /**
      * 布隆过滤器假阳性概率
@@ -38,7 +62,30 @@ public class CrawlerConfig {
     private double bloomFilterFalsePositiveProbability = 0.0001D;
 
     /**
+     * request
+     *
+     * @param requester requester
+     * @return this
+     */
+    public CrawlerConfig requester(Requester requester) {
+        this.requester = requester;
+        return this;
+    }
+
+    /**
+     * visitor,or use {@link com.luoyifan.lightcrawler.core.processor.ConsoleVisitor} by default
+     *
+     * @param visitor visitor
+     * @return this
+     */
+    public CrawlerConfig visitor(Visitor visitor) {
+        this.visitor = visitor;
+        return this;
+    }
+
+    /**
      * thread num
+     *
      * @param num num
      * @return this
      */
@@ -49,6 +96,7 @@ public class CrawlerConfig {
 
     /**
      * request interval
+     *
      * @param millisecond interval
      * @return this
      */
@@ -58,7 +106,19 @@ public class CrawlerConfig {
     }
 
     /**
+     * watch interval
+     *
+     * @param millisecond interval
+     * @return this
+     */
+    public CrawlerConfig watchInterval(long millisecond) {
+        this.watchInterval = millisecond;
+        return this;
+    }
+
+    /**
      * allow retry
+     *
      * @param retry allow
      * @return this
      */
@@ -70,10 +130,11 @@ public class CrawlerConfig {
     /**
      * max execute count
      * when request or visit throw any exception,the <code>executeCount</code> inside the seed will be increased
-     *
+     * <p>
      * when the {@link #retry(boolean)}<code> is <code>true</code>
      * or executeCount</code> inside the seed equals <code>maxExecuteCount</code>
      * the seed will not be pushed back to the queue
+     *
      * @param count count
      * @return this
      */
@@ -83,21 +144,34 @@ public class CrawlerConfig {
     }
 
     /**
+     * allow duplicate url or <code>true</code> by default
+     *
+     * @param duplicate allow
+     * @return
+     */
+    public CrawlerConfig duplicate(boolean duplicate) {
+        this.duplicate = duplicate;
+        return this;
+    }
+
+    /**
      * if seed's count larger than <code>count</code>,bloom filter will be enabled
-     * @param count count
+     *
+     * @param num num
      * @return this
      */
-    public CrawlerConfig useBloomFilterSeedCount(int count){
-        this.useBloomFilterSeedCount = count;
+    public CrawlerConfig minimumNumOfSeedsUsingBloomFilter(int num) {
+        this.minimumNumOfSeedsUsingBloomFilter = num;
         return this;
     }
 
     /**
      * bloom filter false-positive probability
+     *
      * @param probability probability
      * @return this
      */
-    public CrawlerConfig bloomFilterFalsePositiveProbability(double probability){
+    public CrawlerConfig bloomFilterFalsePositiveProbability(double probability) {
         this.bloomFilterFalsePositiveProbability = probability;
         return this;
     }

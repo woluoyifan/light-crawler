@@ -2,11 +2,13 @@ package com.luoyifan.lightcrawler.core;
 
 import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
 import com.luoyifan.lightcrawler.core.model.Seed;
-import com.luoyifan.lightcrawler.core.processor.ConsoleVisitor;
+import com.luoyifan.lightcrawler.core.processor.DefaultDispatcher;
 import com.luoyifan.lightcrawler.core.processor.Dispatcher;
+import com.luoyifan.lightcrawler.core.processor.FilterableDispatcher;
 import com.luoyifan.lightcrawler.core.processor.Requester;
 import com.luoyifan.lightcrawler.core.processor.Visitor;
 import lombok.Getter;
+import orestes.bloomfilter.FilterBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,16 +18,6 @@ import java.util.List;
  * @date 2019/5/11 23:12
  */
 public class Crawler {
-    /**
-     * requester
-     */
-    @Getter
-    private Requester requester;
-    /**
-     * visitor
-     */
-    @Getter
-    private Visitor visitor;
     /**
      * seedList
      */
@@ -37,28 +29,31 @@ public class Crawler {
     @Getter
     private CrawlerConfig config = new CrawlerConfig();
 
+    @Getter
+    private Dispatcher dispatcher = new DefaultDispatcher();
+
     /**
      * start the crawler
      */
     public void start() {
-        if(this.visitor == null){
-            this.visitor = new ConsoleVisitor();
+        if (!config.isDuplicate() && dispatcher.getClass().equals(DefaultDispatcher.class)) {
+            dispatcher = new FilterableDispatcher();
         }
-        Dispatcher dispatcher = new Dispatcher(this.requester, this.visitor);
-        dispatcher.init(this.seedList,config);
+        dispatcher.init(this.seedList, config);
         dispatcher.dispatch();
     }
 
     /**
      * add url
+     *
      * @param url url
      * @return this
      */
-    public Crawler add(String url){
-        if(url == null){
+    public Crawler add(String url) {
+        if (url == null) {
             throw new IllegalArgumentException("url can not be null");
         }
-        if(url.isEmpty()){
+        if (url.isEmpty()) {
             throw new IllegalArgumentException("url can not be empty");
         }
         seedList.add(new Seed(url));
@@ -67,14 +62,15 @@ public class Crawler {
 
     /**
      * add urls
+     *
      * @param urls url array
      * @return this
      */
-    public Crawler add(String...urls){
-        if(urls == null){
+    public Crawler add(String... urls) {
+        if (urls == null) {
             throw new IllegalArgumentException("urls can not be null");
         }
-        for(String url:urls){
+        for (String url : urls) {
             this.add(url);
         }
         return this;
@@ -82,6 +78,7 @@ public class Crawler {
 
     /**
      * add seed
+     *
      * @param seed seed
      * @return this
      */
@@ -101,6 +98,7 @@ public class Crawler {
 
     /**
      * add seed list
+     *
      * @param seedList seed list
      * @return this
      */
@@ -114,6 +112,7 @@ public class Crawler {
 
     /**
      * requester,required
+     *
      * @param requester requester
      * @return this
      */
@@ -121,12 +120,11 @@ public class Crawler {
         if (requester == null) {
             throw new IllegalArgumentException("requester can not be null");
         }
-        this.requester = requester;
+        this.config.setRequester(requester);
         return this;
     }
 
     /**
-     * visitor,or use {@link com.luoyifan.lightcrawler.core.processor.ConsoleVisitor} by default
      * @param visitor visitor
      * @return this
      */
@@ -134,32 +132,41 @@ public class Crawler {
         if (visitor == null) {
             throw new IllegalArgumentException("visitor can not be null");
         }
-        this.visitor = visitor;
+        this.config.setVisitor(visitor);
         return this;
     }
 
     /**
      * thread num
+     *
      * @param num thread num
      * @return this
      */
     public Crawler thread(int num) {
+        if (num <= 0) {
+            throw new IllegalArgumentException("thread must >0");
+        }
         this.config.setThread(num);
         return this;
     }
 
     /**
      * request interval,or use <code>200</code> by default
+     *
      * @param millisecond interval
      * @return this
      */
     public Crawler requestInterval(long millisecond) {
+        if (millisecond < 0) {
+            throw new IllegalArgumentException("millisecond must >= 0");
+        }
         this.config.setRequestInterval(millisecond);
         return this;
     }
 
     /**
      * retry,or use <code>true</code> by default
+     *
      * @param retry allow retry
      * @return this
      */
@@ -171,20 +178,79 @@ public class Crawler {
     /**
      * max execute count
      * when request or visit throw any exception,the <code>executeCount</code> inside the seed will be increased
-     *
+     * <p>
      * when the {@link #retry(boolean)}<code> is <code>true</code>
      * or executeCount</code> inside the seed equals <code>maxExecuteCount</code>
      * the seed will not be pushed back to the queue
+     *
      * @param count max execute count
      * @return this
      */
     public Crawler maxExecuteCount(int count) {
+        if (count < 1) {
+            throw new IllegalArgumentException("count must > 0");
+        }
         this.config.setMaxExecuteCount(count);
         return this;
     }
 
     /**
+     * replace internal dispatcher
+     *
+     * @param dispatcher dispatcher
+     * @return this
+     */
+    public Crawler dispatcher(Dispatcher dispatcher) {
+        if (dispatcher == null) {
+            throw new IllegalArgumentException("dispatcher can not be null");
+        }
+        this.dispatcher = dispatcher;
+        return this;
+    }
+
+    /**
+     * allow duplicate url or <code>true</code> by default
+     *
+     * @param duplicate duplicate
+     * @return this
+     */
+    public Crawler duplicate(boolean duplicate) {
+        this.config.setDuplicate(duplicate);
+        return this;
+    }
+
+    /**
+     * minimum number of seeds using bloom filter
+     *
+     * @param num num
+     * @return this
+     */
+    public Crawler minimumNumOfSeedsUsingBloomFilter(int num) {
+        if (num < 0) {
+            throw new IllegalArgumentException("num must >=0");
+        }
+        this.config.setMinimumNumOfSeedsUsingBloomFilter(num);
+        return this;
+    }
+
+    /**
+     * bloom filter false positive probability
+     * {@link FilterBuilder#falsePositiveProbability()}
+     *
+     * @param probability probability
+     * @return this
+     */
+    public Crawler bloomFilterFalsePositiveProbability(double probability) {
+        if (probability <= 0) {
+            throw new IllegalArgumentException("probability must >0");
+        }
+        this.config.setBloomFilterFalsePositiveProbability(probability);
+        return this;
+    }
+
+    /**
      * replace internal config
+     *
      * @param config config
      * @return this
      */
