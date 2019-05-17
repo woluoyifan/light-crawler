@@ -1,9 +1,12 @@
 package com.luoyifan.lightcrawler.core.processor;
 
 import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
+import com.luoyifan.lightcrawler.core.filter.BloomDuplicateUrlFilter;
+import com.luoyifan.lightcrawler.core.filter.DuplicateUrlFilter;
+import com.luoyifan.lightcrawler.core.filter.HashSetDuplicateUrlFilter;
 import com.luoyifan.lightcrawler.core.model.Seed;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author EvanLuo
@@ -14,12 +17,11 @@ public class FilterableDispatcher extends DefaultDispatcher {
     private DuplicateUrlFilter duplicateUrlFilter;
 
     @Override
-    public void init(List<Seed> seedList, CrawlerConfig config) {
-        if (seedList != null && seedList.size() < config.getMinimumNumOfSeedsUsingBloomFilter()) {
+    public void init(Collection<Seed> seedList, CrawlerConfig config) {
+        if (config.isUseBloomFilter()) {
+            duplicateUrlFilter = new BloomDuplicateUrlFilter(seedList.size());
+        } else {
             duplicateUrlFilter = new HashSetDuplicateUrlFilter();
-        }else{
-            //TODO use bloom filter
-            throw new UnsupportedOperationException("bloom filter not support");
         }
         super.init(seedList, config);
     }
@@ -30,10 +32,9 @@ public class FilterableDispatcher extends DefaultDispatcher {
             return 0;
         }
         String url = seed.getUrl();
-        if(duplicateUrlFilter.contains(url)){
+        if (!duplicateUrlFilter.add(url)) {
             return 0;
         }
-        duplicateUrlFilter.add(url);
         return super.pushToSeedQueue(seed);
     }
 

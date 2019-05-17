@@ -8,7 +8,7 @@ import com.luoyifan.lightcrawler.core.queue.MemorySeedQueue;
 import com.luoyifan.lightcrawler.core.queue.ResourceQueue;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,7 +35,7 @@ public class DefaultDispatcher implements Dispatcher {
     /**
      * 执行器自旋间隔
      */
-    private long spinInterval = 10L;
+    private long spinInterval = 3L;
     /**
      * 爬取配置
      */
@@ -54,7 +54,7 @@ public class DefaultDispatcher implements Dispatcher {
     private boolean initialized = false;
 
     @Override
-    public void init(List<Seed> seedList, CrawlerConfig config) {
+    public void init(Collection<Seed> seedList, CrawlerConfig config) {
         if (seedList == null) {
             throw new IllegalArgumentException("seedList can not be null");
         }
@@ -103,38 +103,39 @@ public class DefaultDispatcher implements Dispatcher {
     }
 
     protected void handleSeed() {
+        AtomicInteger flowValve = new AtomicInteger(config.getThread());
+        boolean enableRequestInterval = config.getRequestInterval() > 0;
         while (true) {
             if (counter.get() == 0) {
                 return;
             }
-            if (seedQueue.isEmpty()) {
+            while (seedQueue.isEmpty() || flowValve.get() == 0){
                 sleep(spinInterval);
-                continue;
             }
+            flowValve.decrementAndGet();
             Seed seed = seedQueue.remove(0);
+            if (enableRequestInterval) {
+                sleep(config.getRequestInterval());
+            }
             requestThreadPool.execute(() -> {
-                if (config.getRequestInterval() > 0) {
-                    synchronized (DefaultDispatcher.class) {
-                        sleep(config.getRequestInterval());
-                    }
-                }
-                seed.increaseExecuteCount();
+                seed.incrementExecuteCount();
                 seed.setExecuteTime(System.currentTimeMillis());
-                String url = seed.getUrl();
                 Page page;
                 try {
                     page = config.getRequester().request(seed);
-                } catch (IOException e) {
-                    log.error("request fail,url:{}", url, e);
+                } catch (Exception e) {
+                    log.error("request fail,url:{}", seed.getUrl(), e);
                     pushBack(seed);
                     return;
+                }finally {
+                    flowValve.incrementAndGet();
                 }
                 if (page == null) {
                     return;
                 }
                 page.setSeed(seed);
                 pushToPageQueue(page);
-                log.info("request success,url:{}", url);
+                log.info("request success,url:{}", seed.getUrl());
             });
 
         }
@@ -166,9 +167,9 @@ public class DefaultDispatcher implements Dispatcher {
                     counter.addAndGet(pushNum);
                     log.info("push seed num: {}",pushNum);
                 }
-                //handle seed-page-chain finish ,count--
-                counter.addAndGet(-1);
                 log.info("visitor success,url:{}", seed.getUrl());
+                //handle seed-page-chain finish ,count--
+                counter.decrementAndGet();
             });
         }
     }
@@ -225,7 +226,7 @@ public class DefaultDispatcher implements Dispatcher {
         }
     }
 
-    protected int pushToSeedQueue(List<Seed> seedList) {
+    protected int pushToSeedQueue(Collection<Seed> seedList) {
         if (seedList != null && seedList.size() > 0) {
             return seedList.stream()
                     .mapToInt(this::pushToSeedQueue)

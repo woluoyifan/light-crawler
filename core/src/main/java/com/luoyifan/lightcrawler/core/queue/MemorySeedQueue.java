@@ -2,6 +2,7 @@ package com.luoyifan.lightcrawler.core.queue;
 
 import com.luoyifan.lightcrawler.core.model.Seed;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,7 +26,7 @@ public class MemorySeedQueue implements ResourceQueue<Seed> {
     }
 
     @Override
-    public void addAll(List<Seed> objList) {
+    public void addAll(Collection<Seed> objList) {
         seedList.addAll(objList);
     }
 

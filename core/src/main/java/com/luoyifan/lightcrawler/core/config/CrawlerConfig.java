@@ -12,54 +12,55 @@ import lombok.Data;
 @Data
 public class CrawlerConfig {
     /**
-     * 请求器
+     * requester
      */
     private Requester requester;
 
     /**
-     * 解析器
+     * visitor
      */
     private Visitor visitor = new ConsoleVisitor();
 
     /**
-     * 执行线程数
+     * thread num
      */
     private int thread = 1;
 
     /**
-     * 请求间隔
+     * request interval,or use <code>200</code> by default
      */
     private long requestInterval = 200L;
 
     /**
-     * 监听状态报送间隔
+     * watch interval,or use <code>1000</code> by default
      */
     private long watchInterval = 1000L;
 
     /**
-     * 允许重试
+     * retry,or use <code>true</code> by default
      */
     private boolean retry = true;
 
     /**
-     * 最大执行次数
+     * max execute count
+     * when request or visit throw any exception,the <code>executeCount</code> inside the seed will be increased
      */
     private int maxExecuteCount = 3;
 
     /**
-     * url可重复
+     * allow duplicate url or <code>true</code> by default
      */
     private boolean duplicate = true;
 
     /**
-     * 使用布隆过滤器的最小种子数
+     * Use a Bloom filter, note that the Bloom filter has a slight false positive
      */
-    private int minimumNumOfSeedsUsingBloomFilter = 1000000;
+    private boolean useBloomFilter = false;
 
     /**
-     * 布隆过滤器假阳性概率
+     * The expected number of elements in the Bloom filter
      */
-    private double bloomFilterFalsePositiveProbability = 0.0001D;
+    private int bloomFilterExpectedElements = 1000000;
 
     /**
      * request
@@ -147,7 +148,7 @@ public class CrawlerConfig {
      * allow duplicate url or <code>true</code> by default
      *
      * @param duplicate allow
-     * @return
+     * @return this
      */
     public CrawlerConfig duplicate(boolean duplicate) {
         this.duplicate = duplicate;
@@ -155,24 +156,26 @@ public class CrawlerConfig {
     }
 
     /**
-     * if seed's count larger than <code>count</code>,bloom filter will be enabled
+     * Use a Bloom filter, note that the Bloom filter has a slight false positive
+     * {@link orestes.bloomfilter.BloomFilter}
+     * {@link orestes.bloomfilter.memory.BloomFilterMemory}
      *
-     * @param num num
+     * @param use use
      * @return this
      */
-    public CrawlerConfig minimumNumOfSeedsUsingBloomFilter(int num) {
-        this.minimumNumOfSeedsUsingBloomFilter = num;
+    public CrawlerConfig useBloomFilter(boolean use) {
+        this.useBloomFilter = use;
         return this;
     }
 
     /**
-     * bloom filter false-positive probability
+     * The expected number of elements in the Bloom filter
      *
-     * @param probability probability
+     * @param num num
      * @return this
      */
-    public CrawlerConfig bloomFilterFalsePositiveProbability(double probability) {
-        this.bloomFilterFalsePositiveProbability = probability;
+    public CrawlerConfig bloomFilterExpectedElements(int num) {
+        this.bloomFilterExpectedElements = num;
         return this;
     }
 }

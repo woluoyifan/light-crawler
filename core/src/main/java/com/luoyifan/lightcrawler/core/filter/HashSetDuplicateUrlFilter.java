@@ -1,7 +1,6 @@
-package com.luoyifan.lightcrawler.core.processor;
+package com.luoyifan.lightcrawler.core.filter;
 
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * @author EvanLuo
@@ -12,27 +11,27 @@ public class HashSetDuplicateUrlFilter implements DuplicateUrlFilter {
     private HashSet<String> store = new HashSet<>();
 
     @Override
-    public void add(String url) {
-        store.add(url);
+    public synchronized boolean add(String url) {
+        return store.add(url);
     }
 
     @Override
-    public void addAll(List<String> urlList) {
-        store.addAll(urlList);
-    }
-
-    @Override
-    public boolean contains(String url) {
+    public synchronized boolean contains(String url) {
         return store.contains(url);
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         store.clear();
     }
 
     @Override
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         return store.isEmpty();
+    }
+
+    @Override
+    public int size() {
+        return store.size();
     }
 }

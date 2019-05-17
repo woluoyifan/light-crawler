@@ -1,5 +1,6 @@
 package com.luoyifan.lightcrawler.core.queue;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -11,7 +12,7 @@ public interface ResourceQueue<T> {
 
     void add(T obj);
 
-    void addAll(List<T> objList);
+    void addAll(Collection<T> objList);
 
     T remove(int index);
 

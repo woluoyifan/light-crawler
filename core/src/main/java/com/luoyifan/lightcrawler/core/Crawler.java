@@ -8,10 +8,10 @@ import com.luoyifan.lightcrawler.core.processor.FilterableDispatcher;
 import com.luoyifan.lightcrawler.core.processor.Requester;
 import com.luoyifan.lightcrawler.core.processor.Visitor;
 import lombok.Getter;
-import orestes.bloomfilter.FilterBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author EvanLuo
@@ -137,6 +137,20 @@ public class Crawler {
     }
 
     /**
+     * replace internal dispatcher
+     *
+     * @param dispatcher dispatcher
+     * @return this
+     */
+    public Crawler dispatcher(Dispatcher dispatcher) {
+        if (dispatcher == null) {
+            throw new IllegalArgumentException("dispatcher can not be null");
+        }
+        this.dispatcher = dispatcher;
+        return this;
+    }
+
+    /**
      * thread num
      *
      * @param num thread num
@@ -165,6 +179,20 @@ public class Crawler {
     }
 
     /**
+     * request interval,or use <code>200</code> by default
+     *
+     * @param millisecond interval
+     * @return this
+     */
+    public Crawler watchInterval(long millisecond) {
+        if (millisecond < 0) {
+            throw new IllegalArgumentException("millisecond must >= 0");
+        }
+        this.config.setWatchInterval(millisecond);
+        return this;
+    }
+
+    /**
      * retry,or use <code>true</code> by default
      *
      * @param retry allow retry
@@ -188,23 +216,9 @@ public class Crawler {
      */
     public Crawler maxExecuteCount(int count) {
         if (count < 1) {
-            throw new IllegalArgumentException("count must > 0");
+            throw new IllegalArgumentException("count must >0");
         }
         this.config.setMaxExecuteCount(count);
-        return this;
-    }
-
-    /**
-     * replace internal dispatcher
-     *
-     * @param dispatcher dispatcher
-     * @return this
-     */
-    public Crawler dispatcher(Dispatcher dispatcher) {
-        if (dispatcher == null) {
-            throw new IllegalArgumentException("dispatcher can not be null");
-        }
-        this.dispatcher = dispatcher;
         return this;
     }
 
@@ -220,31 +234,29 @@ public class Crawler {
     }
 
     /**
-     * minimum number of seeds using bloom filter
+     * Use a Bloom filter, note that the Bloom filter has a slight false positive
+     * {@link orestes.bloomfilter.BloomFilter}
+     * {@link orestes.bloomfilter.memory.BloomFilterMemory}
      *
-     * @param num num
+     * @param use use
      * @return this
      */
-    public Crawler minimumNumOfSeedsUsingBloomFilter(int num) {
-        if (num < 0) {
-            throw new IllegalArgumentException("num must >=0");
-        }
-        this.config.setMinimumNumOfSeedsUsingBloomFilter(num);
+    public Crawler useBloomFilter(boolean use) {
+        this.config.setUseBloomFilter(use);
         return this;
     }
 
     /**
-     * bloom filter false positive probability
-     * {@link FilterBuilder#falsePositiveProbability()}
+     * The expected number of elements in the Bloom filter
      *
-     * @param probability probability
+     * @param num num
      * @return this
      */
-    public Crawler bloomFilterFalsePositiveProbability(double probability) {
-        if (probability <= 0) {
-            throw new IllegalArgumentException("probability must >0");
+    public Crawler bloomFilterExpectedElements(int num) {
+        if(num < 1){
+            throw new IllegalArgumentException("num must >0");
         }
-        this.config.setBloomFilterFalsePositiveProbability(probability);
+        this.config.setBloomFilterExpectedElements(num);
         return this;
     }
 
@@ -262,4 +274,16 @@ public class Crawler {
         return this;
     }
 
+    public static void main(String[] args) {
+        System.out.println(c.get());
+        System.out.println(c.getAndIncrement());
+        System.out.println(c.get());
+        System.out.println(c.getAndDecrement());
+        System.out.println(c.get());
+    }
+
+    private static  AtomicInteger c = new AtomicInteger();
+    public static void add(){
+        c.getAndDecrement();
+    }
 }

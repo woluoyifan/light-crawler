@@ -47,7 +47,7 @@ public class CrawlerTest {
         new Crawler()
                 .add(DEFAULT_SEED_LIST)
                 .requester(new MockRequester())
-                .requestInterval(0L)
+                .requestInterval(50L)
                 .thread(3)
                 .start();
     }
@@ -64,11 +64,12 @@ public class CrawlerTest {
 
 
     @Test
-    public void testDeepCrawler(){
+    public void testDeepCrawler() {
         new Crawler()
                 .add(DEFAULT_SEED_LIST)
                 .requester(new MockRequester())
                 .visitor(new DeepVisitor())
                 .start();
     }
+
 }

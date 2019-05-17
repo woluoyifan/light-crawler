@@ -76,7 +76,7 @@ public class Seed {
      * increase internal executeCount
      * @return executeCount
      */
-    public int increaseExecuteCount() {
+    public int incrementExecuteCount() {
         this.executeCount++;
         return this.executeCount;
     }

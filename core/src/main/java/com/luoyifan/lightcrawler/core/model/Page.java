@@ -29,7 +29,7 @@ public class Page {
     /**
      * response content
      * @param content content
-     * @return
+     * @return this
      */
     public Page content(byte[] content){
         this.content = content;
@@ -39,7 +39,7 @@ public class Page {
     /**
      * response code
      * @param code code
-     * @return
+     * @return this
      */
     public Page code(int code){
         this.code = code;
@@ -49,7 +49,7 @@ public class Page {
     /**
      * response charset
      * @param charset response charset
-     * @return
+     * @return this
      */
     public Page charset(Charset charset){
         this.charset = charset;
@@ -58,8 +58,8 @@ public class Page {
 
     /**
      * append seed
-     * @param seed
-     * @return
+     * @param seed seed
+     * @return this
      */
     public Page next(Seed seed) {
         this.nextList.add(seed);
@@ -68,8 +68,8 @@ public class Page {
 
     /**
      * append seed
-     * @param seedList
-     * @return
+     * @param seedList seedList
+     * @return this
      */
     public Page next(List<Seed> seedList) {
         this.nextList.addAll(seedList);
