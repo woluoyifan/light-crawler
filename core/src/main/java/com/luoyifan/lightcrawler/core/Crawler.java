@@ -11,7 +11,6 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author EvanLuo
@@ -274,16 +273,4 @@ public class Crawler {
         return this;
     }
 
-    public static void main(String[] args) {
-        System.out.println(c.get());
-        System.out.println(c.getAndIncrement());
-        System.out.println(c.get());
-        System.out.println(c.getAndDecrement());
-        System.out.println(c.get());
-    }
-
-    private static  AtomicInteger c = new AtomicInteger();
-    public static void add(){
-        c.getAndDecrement();
-    }
 }
