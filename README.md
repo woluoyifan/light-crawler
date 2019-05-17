@@ -5,7 +5,6 @@
 当前版本<code>2.0</code><br>
 
 ## 二.快速开始<br>
-自定义````Requester````的接口实现类<br><br>
 一个简单的例子:<br>
 ````
     new Crawler()
@@ -22,20 +21,12 @@
         //启动
         .start();
 ````
-作为快速开始的例子的一部分,目前提供了2个基础的实现类<br>
-位于````core````模块的````OkHttpRequester````,实现了````Requester````接口<br>
-位于````extend````模块的````ConsoleVisitor````,实现了````Visitor````接口<br>
+作为快速开始的例子的一部分,提供了2个基础的实现类<br>
+位于````core````模块的````OkHttpRequester````实现了````Requester````接口<br>
+位于````extend````模块的````ConsoleVisitor````实现了````Visitor````接口<br>
 
 ## 三.项目说明<br>
-项目依赖
-<ul>
-    <li>lombok</li>
-    <li>slf4j-api</li>
-    <li>log4j2</li>
-    <li>okhttp(可选)</li>
-</ul>
-
-已支持功能
+#### 已支持功能
 <ul>
     <li>多线程</li>
     <li>深度爬取</li>
@@ -46,14 +37,13 @@
     <li>基于<code>HashSet</code>或<code>布隆过滤器(bloom filter)</code>的url去重</li>
 </ul>
 
-待完成功能
+#### 待完成功能
 <ul>
     <li>完整的实时统计</li>
     <li>web/restapi控制支持(待定,与[超轻量级]的定位是否符合?)</li>
 </ul>
 
-版本历史<br>
-
+#### 版本历史
 <code>2.0</code>提供以下完整的支持
 <ul>
     <li>多线程</li>
@@ -61,23 +51,29 @@
     <li>基于<code>HashSet</code>或<code>布隆过滤器(bloom filter)</code>的url去重</li>
     <li>相对丰富的可拓展性</li>
 </ul>
-
+<br>
 <code>1.x</code>
-提供了以下基础的支持
+提供了以下基础的支持,该版本建议仅供开发历史参考,请停止使用<br><br>
 <ul>
     <li>多线程</li>
     <li>深度爬取</li>
     <li>一定的可拓展性</li>
 </ul>
-建议进行开发历史参考和轻量使用使用.小版本API非常不稳定,建议停止使用<br><br>
 
+#### 项目依赖
+<ul>
+    <li>lombok</li>
+    <li>slf4j-api</li>
+    <li>log4j2</li>
+    <li>okhttp(可选)</li>
+</ul>
 
 ## 四.结语<br>
 
 脚手架使用过程中如遇到任何问题或无法使用的朋友,请联系我,我会提供一定的技术支持.
 
-QQ: 345300490
-WeChat: EvanLowe 
-Email: woluoyifan@foxmail.com
+QQ: 345300490<br>
+WeChat: EvanLowe<br>
+Email: woluoyifan@foxmail.com<br>
 
 如果觉得这个脚手架给你带来了一定的帮助,请帮忙点个赞(star),你的支持是我前进的动力,谢谢!
