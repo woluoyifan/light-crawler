@@ -109,8 +109,9 @@ public class DefaultDispatcher implements Dispatcher {
             if (counter.get() == 0) {
                 return;
             }
-            while (seedQueue.isEmpty() || flowValve.get() == 0){
+            if (seedQueue.isEmpty() || flowValve.get() == 0){
                 sleep(spinInterval);
+                continue;
             }
             flowValve.decrementAndGet();
             Seed seed = seedQueue.remove(0);
