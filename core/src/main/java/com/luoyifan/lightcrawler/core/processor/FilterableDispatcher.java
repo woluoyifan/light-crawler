@@ -19,7 +19,7 @@ public class FilterableDispatcher extends DefaultDispatcher {
     @Override
     public void init(Collection<Seed> seedList, CrawlerConfig config) {
         if (config.isUseBloomFilter()) {
-            duplicateUrlFilter = new BloomDuplicateUrlFilter(seedList.size());
+            duplicateUrlFilter = new BloomDuplicateUrlFilter(config.getBloomFilterExpectedElements());
         } else {
             duplicateUrlFilter = new HashSetDuplicateUrlFilter();
         }
