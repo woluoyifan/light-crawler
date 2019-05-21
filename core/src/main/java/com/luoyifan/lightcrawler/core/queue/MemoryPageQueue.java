@@ -2,7 +2,6 @@ package com.luoyifan.lightcrawler.core.queue;
 
 import com.luoyifan.lightcrawler.core.model.Page;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,13 +20,11 @@ public class MemoryPageQueue implements ResourceQueue<Page> {
     }
 
     @Override
-    public void add(Page obj) {
-        pageList.add(obj);
-    }
-
-    @Override
-    public void addAll(Collection<Page> objList) {
-        pageList.addAll(objList);
+    public boolean add(Page obj) {
+        if (obj == null) {
+            return false;
+        }
+        return pageList.add(obj);
     }
 
     @Override

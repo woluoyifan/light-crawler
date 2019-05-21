@@ -3,15 +3,21 @@ package com.luoyifan.lightcrawler.core.processor;
 import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
 import com.luoyifan.lightcrawler.core.model.Page;
 import com.luoyifan.lightcrawler.core.model.Seed;
+import com.luoyifan.lightcrawler.core.queue.FilterableMemorySeedQueue;
 import com.luoyifan.lightcrawler.core.queue.MemoryPageQueue;
 import com.luoyifan.lightcrawler.core.queue.MemorySeedQueue;
 import com.luoyifan.lightcrawler.core.queue.ResourceQueue;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -24,6 +30,10 @@ public class DefaultDispatcher implements Dispatcher {
      * 请求线程池
      */
     private ExecutorService requestThreadPool;
+    /**
+     * 解析线程池
+     */
+    private ExecutorService visitThreadPool;
     /**
      * 调度线程池
      */
@@ -68,12 +78,15 @@ public class DefaultDispatcher implements Dispatcher {
             throw new IllegalArgumentException("visitor not set");
         }
         this.config = config;
-        this.seedQueue = initSeedQueue();
-        int pushNum = pushToSeedQueue(seedList);
+        this.seedQueue = initSeedQueue(config);
+        int pushNum = seedList.stream()
+                .mapToInt(s -> this.seedQueue.add(s) ? 1 : 0)
+                .sum();
         this.counter = new AtomicInteger(pushNum);
-        this.pageQueue = initPageQueue();
-        this.requestThreadPool = initRequestThreadPool(config.getThread());
-        this.dispatchThreadPool = initDispatchThreadPool();
+        this.pageQueue = initPageQueue(config);
+        this.requestThreadPool = initRequestThreadPool(config);
+        this.visitThreadPool = initVisitThreadPool(config);
+        this.dispatchThreadPool = initDispatchThreadPool(config);
         this.initialized = true;
     }
 
@@ -90,26 +103,44 @@ public class DefaultDispatcher implements Dispatcher {
         }
         log.info("init size: {}", seedQueue.size());
         log.info("start seed processor");
-        dispatchThreadPool.execute(this::handleSeed);
+        dispatchThreadPool.execute(() -> dispatchRequest(config, requestThreadPool, seedQueue, pageQueue));
         log.info("start page processor");
-        dispatchThreadPool.execute(this::handlePage);
+        dispatchThreadPool.execute(() -> dispatchVisit(config, visitThreadPool, seedQueue, pageQueue));
         log.info("start watch dog");
         watch();
         log.info("try to shutdown request thread pool");
         requestThreadPool.shutdown();
+        log.info("try to shutdown visit thread pool");
+        visitThreadPool.shutdown();
         log.info("try to shutdown dispatch thread pool");
         dispatchThreadPool.shutdown();
+        while (true) {
+            sleep(1000L);
+            if (requestThreadPool.isTerminated()) {
+                if (visitThreadPool.isTerminated()) {
+                    if (dispatchThreadPool.isTerminated()) {
+                        break;
+                    }else{
+                        log.info("waiting for the dispatch thread pool to close");
+                    }
+                }else{
+                    log.info("waiting for the visit thread pool to close");
+                }
+            } else {
+                log.info("waiting for the request thread pool to close");
+            }
+        }
         log.info("stop");
     }
 
-    protected void handleSeed() {
+    protected void dispatchRequest(CrawlerConfig config, ExecutorService threadPool, ResourceQueue<Seed> seedQueue, ResourceQueue<Page> pageQueue) {
         AtomicInteger flowValve = new AtomicInteger(config.getThread());
         boolean enableRequestInterval = config.getRequestInterval() > 0;
         while (true) {
-            if (counter.get() == 0) {
+            if (threadPool.isShutdown()) {
                 return;
             }
-            if (seedQueue.isEmpty() || flowValve.get() == 0){
+            if (seedQueue.isEmpty() || flowValve.get() == 0) {
                 sleep(spinInterval);
                 continue;
             }
@@ -118,33 +149,34 @@ public class DefaultDispatcher implements Dispatcher {
             if (enableRequestInterval) {
                 sleep(config.getRequestInterval());
             }
-            requestThreadPool.execute(() -> {
-                seed.incrementExecuteCount();
-                seed.setExecuteTime(System.currentTimeMillis());
-                Page page;
+            threadPool.execute(() -> {
                 try {
-                    page = config.getRequester().request(seed);
+                    Page page = doRequest(config.getRequester(), seed);
+                    pageQueue.add(page);
+                    log.info("request success,url:{}", seed.getUrl());
                 } catch (Exception e) {
                     log.error("request fail,url:{}", seed.getUrl(), e);
-                    pushBack(seed);
-                    return;
-                }finally {
-                    flowValve.incrementAndGet();
+                    pushBack(config, seedQueue, seed);
                 }
-                if (page == null) {
-                    return;
-                }
-                page.setSeed(seed);
-                pushToPageQueue(page);
-                log.info("request success,url:{}", seed.getUrl());
+                flowValve.incrementAndGet();
             });
-
         }
     }
 
-    protected void handlePage() {
+    protected Page doRequest(Requester requester, Seed seed) throws IOException {
+        seed.incrementExecuteCount();
+        seed.setExecuteTime(System.currentTimeMillis());
+        Page page = requester.request(seed);
+        if (page == null) {
+            return null;
+        }
+        page.setSeed(seed);
+        return page;
+    }
+
+    protected void dispatchVisit(CrawlerConfig config, ExecutorService threadPool, ResourceQueue<Seed> seedQueue, ResourceQueue<Page> pageQueue) {
         while (true) {
-            if (counter.get() == 0) {
+            if (threadPool.isShutdown()) {
                 return;
             }
             if (pageQueue.isEmpty()) {
@@ -152,27 +184,32 @@ public class DefaultDispatcher implements Dispatcher {
                 continue;
             }
             Page page = pageQueue.remove(0);
-            dispatchThreadPool.execute(() -> {
+            threadPool.execute(() -> {
                 Seed seed = page.getSeed();
                 try {
-                    config.getVisitor().visit(page);
+                    List<Seed> nextList = doVisit(config.getVisitor(), page);
+                    //handle next seed list
+                    if (nextList != null && nextList.size() > 0) {
+                        int pushNum = nextList.stream()
+                                .mapToInt(s -> seedQueue.add(s) ? 1 : 0)
+                                .sum();
+                        counter.addAndGet(pushNum);
+                        log.info("push seed num: {}", pushNum);
+                    }
+                    //handle seed-page-chain finish ,count--
+                    counter.decrementAndGet();
+                    log.info("visitor success,url:{}", seed.getUrl());
                 } catch (Exception e) {
                     log.error("visit fail,url:{}", seed.getUrl(), e);
-                    pushBack(seed);
-                    return;
+                    pushBack(config, seedQueue, seed);
                 }
-                //handle next seed list
-                List<Seed> nextList = page.getNextList();
-                if (nextList != null && nextList.size() > 0) {
-                    int pushNum = pushToSeedQueue(nextList);
-                    counter.addAndGet(pushNum);
-                    log.info("push seed num: {}",pushNum);
-                }
-                log.info("visitor success,url:{}", seed.getUrl());
-                //handle seed-page-chain finish ,count--
-                counter.decrementAndGet();
             });
         }
+    }
+
+    protected List<Seed> doVisit(Visitor visitor, Page page) throws Exception {
+        visitor.visit(page);
+        return page.getNextList();
     }
 
     protected void watch() {
@@ -186,12 +223,11 @@ public class DefaultDispatcher implements Dispatcher {
         }
     }
 
-    protected void pushBack(Seed seed) {
+    protected boolean pushBack(CrawlerConfig config, ResourceQueue<Seed> queue, Seed seed) {
         if (config.isRetry() && config.getMaxExecuteCount() > seed.getExecuteCount()) {
-            pushToSeedQueue(seed);
-            return;
+            return queue.add(seed);
         }
-        counter.addAndGet(-1);
+        return false;
     }
 
     protected void sleep(long ms) {
@@ -202,57 +238,79 @@ public class DefaultDispatcher implements Dispatcher {
         }
     }
 
-    protected ExecutorService initRequestThreadPool(int thread) {
-        return Executors.newFixedThreadPool(thread);
+    protected ExecutorService initRequestThreadPool(CrawlerConfig config) {
+        int thread = config.getThread();
+        return new ThreadPoolExecutor(thread, thread,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                new RequestThreadFactory());
     }
 
-    protected ExecutorService initDispatchThreadPool() {
-        return Executors.newCachedThreadPool();
+    protected ExecutorService initVisitThreadPool(CrawlerConfig config) {
+        return new ThreadPoolExecutor(config.getThread(), Integer.MAX_VALUE,
+                60L, TimeUnit.SECONDS,
+                new SynchronousQueue<>(),
+                new VisitThreadFactory());
     }
 
-    protected ResourceQueue<Seed> initSeedQueue() {
-        return new MemorySeedQueue();
+    protected ExecutorService initDispatchThreadPool(CrawlerConfig config) {
+        int thread = 2;
+        return new ThreadPoolExecutor(thread, thread,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(),
+                new DispatchThreadFactory());
     }
 
-    protected ResourceQueue<Page> initPageQueue() {
+    protected ResourceQueue<Seed> initSeedQueue(CrawlerConfig config) {
+        return config.isDuplicate() ? new MemorySeedQueue() : new FilterableMemorySeedQueue(config);
+    }
+
+    protected ResourceQueue<Page> initPageQueue(CrawlerConfig config) {
         return new MemoryPageQueue();
     }
 
-    protected int pushToSeedQueue(Seed seed) {
-        if (seed != null) {
-            seedQueue.add(seed);
-            return 1;
-        } else {
-            return 0;
+    static class RequestThreadFactory extends AbstractThreadFactory {
+        RequestThreadFactory() {
+            super("request");
         }
     }
 
-    protected int pushToSeedQueue(Collection<Seed> seedList) {
-        if (seedList != null && seedList.size() > 0) {
-            return seedList.stream()
-                    .mapToInt(this::pushToSeedQueue)
-                    .sum();
-        } else {
-            return 0;
+    static class VisitThreadFactory extends AbstractThreadFactory {
+        VisitThreadFactory() {
+            super("visit");
         }
     }
 
-    protected int pushToPageQueue(Page page) {
-        if (page != null) {
-            pageQueue.add(page);
-            return 1;
-        } else {
-            return 0;
+    static class DispatchThreadFactory extends AbstractThreadFactory {
+        DispatchThreadFactory() {
+            super("dispatch");
         }
     }
 
-    protected int pushToPageQueue(List<Page> pageList) {
-        if (pageList != null) {
-            return pageList.stream()
-                    .mapToInt(this::pushToPageQueue)
-                    .sum();
-        } else {
-            return 0;
+    static abstract class AbstractThreadFactory implements ThreadFactory {
+        private final ThreadGroup group;
+        private final AtomicInteger threadNumber = new AtomicInteger(0);
+        private final String namePrefix;
+
+        AbstractThreadFactory(String name) {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() :
+                    Thread.currentThread().getThreadGroup();
+            namePrefix = "pool-" +
+                    name +
+                    "-thread-";
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r,
+                    namePrefix + threadNumber.getAndIncrement(),
+                    0);
+            if (t.isDaemon())
+                t.setDaemon(false);
+            if (t.getPriority() != Thread.NORM_PRIORITY)
+                t.setPriority(Thread.NORM_PRIORITY);
+            return t;
         }
     }
 }

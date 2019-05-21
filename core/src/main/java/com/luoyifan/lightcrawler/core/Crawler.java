@@ -4,7 +4,6 @@ import com.luoyifan.lightcrawler.core.config.CrawlerConfig;
 import com.luoyifan.lightcrawler.core.model.Seed;
 import com.luoyifan.lightcrawler.core.processor.DefaultDispatcher;
 import com.luoyifan.lightcrawler.core.processor.Dispatcher;
-import com.luoyifan.lightcrawler.core.processor.FilterableDispatcher;
 import com.luoyifan.lightcrawler.core.processor.Requester;
 import com.luoyifan.lightcrawler.core.processor.Visitor;
 import lombok.Getter;
@@ -35,9 +34,7 @@ public class Crawler {
      * start the crawler
      */
     public void start() {
-        if (!config.isDuplicate() && dispatcher.getClass().equals(DefaultDispatcher.class)) {
-            dispatcher = new FilterableDispatcher();
-        }
+        dispatcher = new DefaultDispatcher();
         dispatcher.init(this.seedList, config);
         dispatcher.dispatch();
     }
@@ -252,7 +249,7 @@ public class Crawler {
      * @return this
      */
     public Crawler bloomFilterExpectedElements(int num) {
-        if(num < 1){
+        if (num < 1) {
             throw new IllegalArgumentException("num must >0");
         }
         this.config.setBloomFilterExpectedElements(num);
